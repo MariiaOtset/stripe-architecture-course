@@ -1,3 +1,5 @@
+"use client";
+
 import { AuthProvider } from '@/lib/auth'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
