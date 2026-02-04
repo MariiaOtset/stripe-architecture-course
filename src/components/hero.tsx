@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Hero() {
   return (
@@ -24,7 +25,7 @@ export function Hero() {
               </Link>
             </div>
           </div>
-          <img
+          <Image
             alt="Hero"
             className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last lg:aspect-square"
             height="550"

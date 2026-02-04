@@ -3,7 +3,16 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { signIn } from '@/app/actions'
+import { getAuth, signInWithEmailAndPassword, User } from 'firebase/auth'
+import { z } from 'zod'
+import { app } from '@/lib/firebase'
+
+const AuthSchema = z.object({
+  email: z.email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+})
+
+type AuthData = z.infer<typeof AuthSchema>
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,15 +20,40 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setError(null)
+
     const formData = new FormData(event.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
-    const result = await signIn({ email, password })
 
-    if (result.error) {
-      setError(result.error)
-    } else {
+    try {
+      const validated: AuthData = AuthSchema.parse({ email, password })
+
+      // Firebase login
+      const auth = getAuth(app)
+      const userCredential = await signInWithEmailAndPassword(auth, validated.email, validated.password)
+
       router.push('/dashboard')
+    } catch (err: unknown) {
+      if (err instanceof z.ZodError) {
+        setError(err.issues[0]?.message)
+      } else if (err instanceof Error) {
+        switch ((err as any).code) {
+          case 'auth/user-not-found':
+            setError('No user found with this email')
+            break
+          case 'auth/wrong-password':
+            setError('Incorrect password')
+            break
+          case 'auth/too-many-requests':
+            setError('Too many failed attempts. Try again later')
+            break
+          default:
+            setError(err.message)
+        }
+      } else {
+        setError('Something went wrong. Please try again')
+      }
     }
   }
 
